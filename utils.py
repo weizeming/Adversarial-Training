@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import dataset, dataloader
 from torchvision import datasets, transforms
+import torch.nn.functional as F
 
 cifar10_mean = (0.4914, 0.4822, 0.4465)  # equals np.mean(train_set.train_data, axis=(0,1,2))/255
 cifar10_std = (0.2471, 0.2435, 0.2616)  # equals np.std(train_set.train_data, axis=(0,1,2))/255
@@ -45,3 +46,20 @@ def load_dataset(dataset='cifar10', batch_size=128):
             batch_size=batch_size, shuffle=False)
 
         return train_loader, test_loader
+
+def attack_pgd(model, x, y, eps, alpha, n_iters):
+    delta = torch.zeros_like(x).to(x.device)
+    delta.uniform_(-eps, eps)
+    delta = torch.clamp(delta, 0-x, 1-x)
+    delta.requires_grad = True
+    for _ in range(n_iters):
+        output = model(normalize_cifar(x+delta))
+        loss = F.cross_entropy(output, y)
+        loss.backward()
+        grad = delta.grad.detach()
+        d = torch.clamp(delta + alpha * torch.sign(grad), min=-eps, max=eps)
+        d = torch.clamp(d, 0 - x, 1 - x)
+        delta.data = d
+        delta.grad.zero_()
+    
+    return delta.detach()
