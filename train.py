@@ -7,10 +7,9 @@ import pandas as pd
 import argparse
 from time import time
 
-from utils import load_dataset, normalize_cifar
+from utils import load_dataset, normalize_cifar, attack_pgd
 from model import PreActResNet18
-from sam import SAM
-from eval import attack_pgd
+
 
 
 def get_args():
@@ -18,7 +17,7 @@ def get_args():
     parser.add_argument('--dataset', default='cifar10')
     parser.add_argument('--epochs', default=100, type=int)
     parser.add_argument('--max-lr', default=0.1, type=float)
-    parser.add_argument('--opt', default='SAM', choices=['SAM', 'SGD'])
+    parser.add_argument('--opt', default='SGD', choices=['SGD'])
     parser.add_argument('--batch-size', default=128, type=int)
     parser.add_argument('--device', default=0, type=int)
     parser.add_argument('--adv', action='store_true')
@@ -44,12 +43,8 @@ if __name__ == '__main__':
     params = model.parameters()
     criterion = nn.CrossEntropyLoss()
 
-    if args.opt == 'SGD': 
-        opt = torch.optim.SGD(params, lr=args.max_lr, momentum=0.9, weight_decay=5e-4)
-    elif args.opt == 'SAM':
-        base_opt = torch.optim.SGD
-        opt = SAM(params, base_opt,lr=args.max_lr, momentum=0.9, weight_decay=5e-4, rho=args.rho)
-    
+    opt = torch.optim.SGD(params, lr=args.max_lr, momentum=0.9, weight_decay=5e-4)
+
     all_log_data = []
     for epoch in range(args.epochs):
         start_time = time()
@@ -69,18 +64,11 @@ if __name__ == '__main__':
             output = model(normalize_cifar(x + delta))
             loss = criterion(output, y)
             
-            if args.opt == 'SGD':
-                opt.zero_grad()
-                loss.backward()
-                opt.step()
-                
-            elif args.opt == 'SAM':
-                loss.backward()
-                opt.first_step(zero_grad=True)
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
+            
 
-                output_2 = model(normalize_cifar(x + delta))
-                criterion(output_2, y).backward()
-                opt.second_step(zero_grad=True)
             
             log_data[0] += (loss * len(y)).item()
             log_data[1] += (output.max(1)[1] == y).float().sum().item()
