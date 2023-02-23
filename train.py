@@ -94,7 +94,7 @@ if __name__ == '__main__':
             log_data[0] += (clean_output.max(1)[1] == y).float().sum().item()
 
             train_loader.set_description(
-                f'Epoch {epoch}: Train Loss {log_data[0]/log_data[2]:.4f} Acc {log_data[1]/log_data[2]*100:.2f}')
+                f'Epoch {epoch}: Train Clean {log_data[0]/log_data[2]*100:.2f} Robsut {log_data[1]/log_data[2]*100:.2f}')
             if args.debug:
                 break
         # test
@@ -113,8 +113,8 @@ if __name__ == '__main__':
             log_data[4] += (output.max(1)[1] == y).float().sum().item()
             log_data[5] += len(x)
 
-            train_loader.set_description(
-                f'Epoch {epoch}: Test Loss {log_data[3]/log_data[5]:.4f} Acc {log_data[4]/log_data[5]*100:.2f}')
+            test_loader.set_description(
+                f'Epoch {epoch}: Test Clean {log_data[3]/log_data[5]*100:.2f} Robust {log_data[4]/log_data[5]*100:.2f}')
             if args.debug:
                 break        
         if log_data[4] > best_acc:
