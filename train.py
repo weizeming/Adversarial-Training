@@ -19,7 +19,7 @@ def get_args():
     parser.add_argument('--dataset', default='cifar10', choices=['cifar10', 'cifar100'])
     
     # avdersarial configerations
-    parser.add_argument('--norm', default='l_inf', choices=['l_inf, l_2'])
+    parser.add_argument('--norm', default='l_inf', choices=['l_inf', 'l_2'])
     parser.add_argument('--eps', default=8., type=float)
     parser.add_argument('--alpha', default=2., type=float)
     parser.add_argument('--steps', default=10, type=int)
