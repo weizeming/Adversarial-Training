@@ -69,7 +69,7 @@ def attack_pgd(model, x, y, eps, alpha, n_iters, norm):
         loss.backward()
         g = delta.grad.detach()
         if norm == "l_inf":
-                d = torch.clamp(d + alpha * torch.sign(g), min=-eps, max=eps)
+                d = torch.clamp(delta + alpha * torch.sign(g), min=-eps, max=eps).detach()
         elif norm == "l_2":
             g_norm = torch.norm(g.view(g.shape[0],-1),dim=1).view(-1,1,1,1)
             scaled_g = g/(g_norm + 1e-10)
